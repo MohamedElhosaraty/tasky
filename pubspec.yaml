@@ -44,6 +44,7 @@ dependencies:
   intl_phone_field: ^3.2.0
   dio: ^5.8.0+1
   dartz: ^0.10.1
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
