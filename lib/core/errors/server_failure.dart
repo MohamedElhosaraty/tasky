@@ -6,7 +6,7 @@ import 'failures.dart';
 class ServerFailure extends Failure {
   const ServerFailure(super.message);
 
-  /// **إنشاء `ServerFailure` بناءً على خطأ `DioError`**
+  /// **إنشاء `ServerFailure` بناءً على خطأ `DioException`**
   factory ServerFailure.fromDioError(DioException error) {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
@@ -44,34 +44,35 @@ class ServerFailure extends Failure {
 
     final int statusCode = response.statusCode!;
     final dynamic responseData = response.data;
+    final String? message = _extractErrorMessage(responseData);
 
     switch (statusCode) {
       case 400:
       case 401:
       case 403:
-        final String message = _extractErrorMessage(responseData) ??
-            'Authentication or permission error. Please check your credentials.';
-        return ServerFailure(message);
+        return ServerFailure(message ?? 'Authentication or permission error. Please check your credentials.');
 
       case 404:
-        return const ServerFailure('Requested resource not found.');
+        return ServerFailure(message ?? 'Requested resource not found.');
 
       case 500:
-        return const ServerFailure('Internal server error. Please try again later.');
+        return ServerFailure(message ?? 'Internal server error. Please try again later.');
 
       default:
-        return ServerFailure('Unexpected error: HTTP $statusCode. Please try again.');
+        return ServerFailure('Unexpected error: HTTP $statusCode. ${message ?? 'Please try again.'}');
     }
   }
 
   /// **استخراج رسالة الخطأ من `response.data` بطريقة ديناميكية**
   static String? _extractErrorMessage(dynamic responseData) {
     if (responseData is Map<String, dynamic>) {
+      if (responseData.containsKey('message') && responseData['message'] is String) {
+        return responseData['message'];
+      }
       if (responseData.containsKey('error')) {
         if (responseData['error'] is String) {
           return responseData['error'];
-        } else if (responseData['error'] is Map<String, dynamic> &&
-            responseData['error'].containsKey('message')) {
+        } else if (responseData['error'] is Map<String, dynamic> && responseData['error'].containsKey('message')) {
           return responseData['error']['message'].toString();
         }
       }
