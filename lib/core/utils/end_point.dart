@@ -5,4 +5,5 @@ class EndPoint {
   static const String token = "token";
   static const String refreshToken = "auth/refresh-token?token=";
   static const String logo = "todos?page=1";
+  static const String createTask = "todos";
 }

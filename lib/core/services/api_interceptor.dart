@@ -4,65 +4,74 @@ import '../errors/server_failure.dart';
 import '../utils/end_point.dart';
 
 class ApiInterceptor extends Interceptor {
-  final Dio dio = Dio(); // تأكد من أن Dio مهيأ بشكل صحيح
+  final Dio dio;
   bool isRefreshing = false;
   final List<Function()> requestQueue = [];
 
+  ApiInterceptor({required this.dio});
+
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    // استرجاع التوكن من الكاش
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     String? token = Prefs.getString(EndPoint.token);
 
     if (token.isNotEmpty) {
       options.headers["Authorization"] = "Bearer $token";
     }
 
-    // تمرير الطلب بعد تعديل الـ headers
-    super.onRequest(options, handler);
+    handler.next(options);
   }
 
   @override
-  void onError(DioException e, ErrorInterceptorHandler handler) async {
-    // في حالة انتهاء صلاحية التوكن (Unauthorized)
-    if (e.response?.statusCode == 401) {
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
+    if (err.response?.statusCode == 401) {
       if (!isRefreshing) {
         isRefreshing = true;
+
         try {
           String newToken = await _refreshToken();
-          Prefs.setString(EndPoint.token, newToken); // حفظ التوكن الجديد
+          Prefs.setString(EndPoint.token, newToken);
 
-          // إعادة تنفيذ الطلبات المعلقة
+          // إعادة تنفيذ جميع الطلبات المعلقة
           for (var retryRequest in requestQueue) {
             retryRequest();
           }
           requestQueue.clear();
         } catch (_) {
-          Prefs.remove(EndPoint.token); // مسح التوكن عند الفشل
+          Prefs.remove(EndPoint.token);
+          requestQueue.clear();
+          handler.reject(err);
         }
+
         isRefreshing = false;
       }
 
-      // حفظ الطلب لإعادة تنفيذه بعد تحديث التوكن
-      final requestOptions = e.requestOptions;
-      requestQueue.add(() {
-        dio.fetch(requestOptions);
+      // إضافة الطلب إلى قائمة الانتظار
+      requestQueue.add(() async {
+        final Response<dynamic> retryResponse = await _retryRequest(err.requestOptions);
+        handler.resolve(retryResponse);
       });
 
       return;
     }
 
-    // تمرير الخطأ إلى باقي البرنامج
-    super.onError(e, handler);
+    handler.next(err);
   }
 
   Future<String> _refreshToken() async {
     try {
       String? oldToken = Prefs.getString(EndPoint.token);
-      final response = await dio.post("${EndPoint.baseUrl}auth/refresh-token?token=$oldToken");
+      final response = await dio.get("${EndPoint.baseUrl}auth/refresh-token?token=$oldToken");
 
       return response.data['token'];
     } catch (e) {
       throw const ServerFailure("Failed to refresh token");
     }
+  }
+
+  Future<Response<dynamic>> _retryRequest(RequestOptions requestOptions) async {
+    final String newToken = Prefs.getString(EndPoint.token);
+    requestOptions.headers["Authorization"] = "Bearer $newToken";
+
+    return await dio.fetch(requestOptions);
   }
 }

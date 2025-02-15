@@ -9,6 +9,7 @@ class CustomTextFormField extends StatelessWidget {
       required this.keyboardInputType,
       this.suffixIcon, this.onSaved,
         this.obscureText = false,
+        this.maxLines = 1,
       });
 
   final String hintText;
@@ -16,11 +17,13 @@ class CustomTextFormField extends StatelessWidget {
   final Widget? suffixIcon;
   final void Function(String?)? onSaved;
   final bool obscureText;
+  final int maxLines;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       obscureText: obscureText,
+      maxLines: maxLines,
       onSaved: onSaved,
       validator: (value){
         if(value == null || value.isEmpty){
@@ -46,7 +49,7 @@ class CustomTextFormField extends StatelessWidget {
 
   OutlineInputBorder buildBorder() {
     return  OutlineInputBorder(
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(16),
       borderSide: const BorderSide(
         width: 1,
         color: Color(0xFFE6E9E9),

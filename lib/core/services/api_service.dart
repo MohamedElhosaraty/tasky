@@ -15,7 +15,7 @@ class ApiService {
       sendTimeout: const Duration(seconds: 30),
       headers: {"Content-Type": "application/json"},
     );
-    dio.interceptors.add(ApiInterceptor());
+    dio.interceptors.add(ApiInterceptor(dio: dio));
     dio.interceptors.add(LogInterceptor(
       error: true,
       request: true,
