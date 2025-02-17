@@ -28,10 +28,10 @@ void setupGetIt() {
   getIt.registerSingleton<LogoRepo>(
       LogoRepoImpl(remoteDataSource: getIt.get<LogoRemoteDataSource>()));
 
-  getIt.registerSingleton<CreateTaskRemoteDataSource>(
+  getIt.registerSingleton<LogoTaskRemoteDataSource>(
       CreateTaskRemoteDataSourceImpl(apiService: getIt.get<ApiService>())
   );
 
   getIt.registerSingleton<CreateTaskRepo>(
-      CreateTaskRepoImpl(createTaskRemoteDataSource: getIt.get<CreateTaskRemoteDataSource>()));
+      CreateTaskRepoImpl(createTaskRemoteDataSource: getIt.get<LogoTaskRemoteDataSource>()));
 }

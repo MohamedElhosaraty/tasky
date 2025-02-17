@@ -48,6 +48,8 @@ dependencies:
   flutter_datetime_picker_plus: ^2.2.0
   image_picker: ^1.1.2
   shimmer: ^3.0.0
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^6.0.6
 
 dev_dependencies:
   flutter_test:

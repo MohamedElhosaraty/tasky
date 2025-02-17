@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:tasky/features/add_task/presentation/views/add_task_view.dart';
 import 'package:tasky/features/auth/presentation/views/signin_view.dart';
 import 'package:tasky/features/auth/presentation/views/signup_view.dart';
+import 'package:tasky/features/logo/domain/logo_entity/logo_entity.dart';
 import 'package:tasky/features/logo/presentation/views/logo_view.dart';
+import 'package:tasky/features/logo/presentation/views/task_details.dart';
 import 'package:tasky/features/on_boarding/on_boarding_view.dart';
-
 import '../../features/splash/splash_view.dart';
 
 Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -26,6 +27,11 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
 
     case AddTaskView.routeName:
       return MaterialPageRoute(builder: (_) => const AddTaskView());
+
+      case TaskDetails.routeName:
+      return MaterialPageRoute(builder: (_) => TaskDetails(
+        logoEntity: settings.arguments as LogoEntity,
+      ));
 
     default:
       return MaterialPageRoute(builder: (_) => const Scaffold());
