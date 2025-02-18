@@ -7,14 +7,14 @@ import '../utils/end_point.dart';
 class ApiInterceptor extends Interceptor {
   final Dio dio;
   bool isRefreshing = false;
-  final List<Completer<Response>> requestQueue = [];
+  final List<Map<String, dynamic>> requestQueue = []; // قائمة الطلبات المعلقة
 
   ApiInterceptor({required this.dio});
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     String? token = Prefs.getString(EndPoint.token);
-    if (token.isNotEmpty ) {
+    if (token.isNotEmpty) {
       options.headers["Authorization"] = "Bearer $token";
     }
     handler.next(options);
@@ -24,23 +24,18 @@ class ApiInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode == 401) {
       final completer = Completer<Response>();
-      requestQueue.add(completer);
+      requestQueue.add({"completer": completer, "requestOptions": err.requestOptions});
 
       if (!isRefreshing) {
         isRefreshing = true;
 
         _refreshToken().then((newToken) {
-          // 1️⃣ تحديث التوكن في Prefs مباشرة بعد التحديث
           Prefs.setString(EndPoint.token, newToken);
-          _retryPendingRequests();
+          _retryPendingRequests(newToken);
         }).catchError((_) {
-          // 2️⃣ في حالة الفشل، احذف التوكن لمنع استخدامه
           Prefs.remove(EndPoint.token);
-          for (var request in requestQueue) {
-            request.completeError(err);
-          }
+          requestQueue.forEach((item) => (item["completer"] as Completer).completeError(err));
           requestQueue.clear();
-          handler.reject(err);
         }).whenComplete(() {
           isRefreshing = false;
         });
@@ -48,8 +43,8 @@ class ApiInterceptor extends Interceptor {
 
       completer.future.then((response) {
         handler.resolve(response);
-      }).catchError((_) {
-        handler.reject(err);
+      }).catchError((error) {
+        handler.reject(DioException(requestOptions: err.requestOptions, error: error));
       });
 
       return;
@@ -58,36 +53,40 @@ class ApiInterceptor extends Interceptor {
     handler.next(err);
   }
 
+  /// تحديث التوكن باستخدام `refreshToken`
   Future<String> _refreshToken() async {
     try {
       String? refreshToken = Prefs.getString(EndPoint.refreshToken);
+      if (refreshToken.isEmpty) {
+        throw const ServerFailure("لا يوجد توكن تحديث متاح");
+      }
+
       final response = await dio.get(
         "${EndPoint.baseUrl}auth/refresh-token?token=$refreshToken",
       );
 
-      final String newToken = response.data['access_token'];
-      return newToken;
+      return response.data['access_token'];
     } catch (e) {
-      throw const ServerFailure("Failed to refresh token");
+      throw ServerFailure("فشل تحديث التوكن: ${e.toString()}");
     }
   }
 
-  void _retryPendingRequests() {
-    final String newToken = Prefs.getString(EndPoint.token);
-
+  /// إعادة إرسال جميع الطلبات المعلقة بعد تحديث التوكن
+  void _retryPendingRequests(String newToken) {
     while (requestQueue.isNotEmpty) {
-      final request = requestQueue.removeAt(0);
-      request.complete(_retryRequest(request.future as RequestOptions, newToken));
+      final requestItem = requestQueue.removeAt(0);
+      _retryRequest(requestItem["requestOptions"], newToken, requestItem["completer"]);
     }
   }
 
-  Future<Response<dynamic>> _retryRequest(RequestOptions requestOptions, String newToken) async {
-    // 3️⃣ تأكد من أن الطلب يستخدم التوكن الجديد قبل إعادة إرساله
-    requestOptions.headers["Authorization"] = "Bearer $newToken";
-    return await dio.fetch(requestOptions);
+  /// إعادة إرسال الطلب باستخدام التوكن الجديد
+  Future<void> _retryRequest(RequestOptions requestOptions, String newToken, Completer<Response> completer) async {
+    try {
+      requestOptions.headers["Authorization"] = "Bearer $newToken";
+      final response = await dio.fetch(requestOptions);
+      completer.complete(response); // إرجاع الاستجابة بعد نجاح الطلب
+    } catch (e) {
+      completer.completeError(e); // إرجاع الخطأ إذا فشل الطلب
+    }
   }
 }
-
-
-
-
