@@ -8,4 +8,8 @@ class EndPoint {
   static const String logo = "todos?page=1";
   static const String createTask = "todos";
   static const String editTask = "todos";
+  static const String deleteTask = "todos";
+  static const String profile = "auth/profile";
+  static const String logout = "auth/logout";
+  static const String oneTask = "todos";
 }

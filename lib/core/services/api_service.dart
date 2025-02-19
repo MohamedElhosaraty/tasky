@@ -56,5 +56,16 @@ class ApiService {
     }
   }
 
+  Future<Response> deleteRequest(String endpoint, {Map<String, dynamic>? params}) async {
+    try {
+      final response = await dio.delete(endpoint, queryParameters: params);
+      return response;
+    } on DioException catch (e) {
+      log("DioException in DELETE: ${e.response?.statusCode} - ${e.message}");
+      throw ServerFailure.fromDioError(e);
+    }
+  }
+
+
 
 }
