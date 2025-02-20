@@ -26,7 +26,8 @@ class ApiService {
     ));
   }
 
-  Future<Response> getRequest(String endpoint, {Map<String, dynamic>? params}) async {
+  Future<Response> getRequest(String endpoint,
+      {Map<String, dynamic>? params}) async {
     try {
       final response = await dio.get(endpoint, queryParameters: params);
       return response;
@@ -36,9 +37,11 @@ class ApiService {
     }
   }
 
-  Future<Response> postRequest(String endpoint, {Map<String, dynamic>? data}) async {
+  Future<Response> postRequest(String endpoint,
+      {bool isFormData = false, Map<String, dynamic>? data}) async {
     try {
-      final response = await dio.post(endpoint, data: data);
+      final response = await dio.post(endpoint,
+          data: isFormData ? FormData.fromMap(data!) : data);
       return response;
     } on DioException catch (e) {
       log("DioException in POST: ${e.response?.statusCode} - ${e.message}");
@@ -46,7 +49,8 @@ class ApiService {
     }
   }
 
-  Future<Response> putRequest(String endpoint, {Map<String, dynamic>? data}) async {
+  Future<Response> putRequest(String endpoint,
+      {Map<String, dynamic>? data}) async {
     try {
       final response = await dio.put(endpoint, data: data);
       return response;
@@ -56,7 +60,8 @@ class ApiService {
     }
   }
 
-  Future<Response> deleteRequest(String endpoint, {Map<String, dynamic>? params}) async {
+  Future<Response> deleteRequest(String endpoint,
+      {Map<String, dynamic>? params}) async {
     try {
       final response = await dio.delete(endpoint, queryParameters: params);
       return response;
@@ -65,7 +70,4 @@ class ApiService {
       throw ServerFailure.fromDioError(e);
     }
   }
-
-
-
 }
