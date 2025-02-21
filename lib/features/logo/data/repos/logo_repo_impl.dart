@@ -2,21 +2,24 @@ import 'package:dartz/dartz.dart';
 
 import 'package:tasky/core/errors/failures.dart';
 import 'package:tasky/features/logo/data/data_sources/logo_remote_data_source.dart';
+import 'package:tasky/features/logo/data/model/logo_model_hive.dart';
 
 import 'package:tasky/features/logo/domain/logo_entity/logo_entity.dart';
 
 import '../../domain/repos/logo_repo.dart';
+import '../data_sources/logo_local_data.dart';
 
 class LogoRepoImpl implements LogoRepo {
 
   final LogoRemoteDataSource remoteDataSource;
+  final LogoLocalDataSource logoLocalDataSource;
 
-  LogoRepoImpl({required this.remoteDataSource});
+  LogoRepoImpl({required this.remoteDataSource ,required this.logoLocalDataSource,});
 
   @override
-  Future<Either<Failure, List<LogoEntity>>> getLogoRepo() async{
+  Future<Either<Failure, Map<String, Object>>> getLogoRepo() async {
     try {
-      final logoList  = await remoteDataSource.getLogo();
+      final logoList = await remoteDataSource.getLogo();
       final List<LogoEntity> logoEntities = logoList.map((logo) => LogoEntity(
         title: logo.title ?? '',
         desc: logo.desc ?? '',
@@ -24,12 +27,55 @@ class LogoRepoImpl implements LogoRepo {
         priority: logo.priority?.toString() ?? '0',
         status: logo.status ?? '',
         createdAt: logo.createdAt.toString(),
-        updatedAt: logo.updatedAt.toString() ,
-        userId: logo.id.toString() ,
+        updatedAt: logo.updatedAt.toString(),
+        userId: logo.id.toString(),
       )).toList();
-      return Right(logoEntities);
+
+      // ✅ تحويل `LogoEntity` إلى `LogoModelHive`
+      final List<LogoModelHive> logoModels = logoEntities.map((entity) => LogoModelHive(
+        id: entity.userId,
+        title: entity.title,
+        desc: entity.desc,
+        image: entity.image,
+        priority: entity.priority,
+        status: entity.status,
+        createdAt: entity.createdAt.toString(),
+        updatedAt: entity.updatedAt.toString(),
+        user: entity.userId,
+        userId: entity.userId,
+      )).toList();
+
+      // ✅ حفظ البيانات محليًا
+      await logoLocalDataSource.saveTask(logoModels);
+
+      return Right({
+        'data': logoEntities,
+        'source': 'server',
+        'errorMessage': ''
+      });
     } on Failure catch (failure) {
-      return Left(failure);
+      // 🚀 إذا فشل الاتصال، جلب البيانات من التخزين المحلي
+      final localTasks = await logoLocalDataSource.getTasks();
+      if (localTasks.isNotEmpty) {
+        final List<LogoEntity> cachedEntities = localTasks.map((task) => LogoEntity(
+          title: task.title,
+          desc: task.desc,
+          image: task.image,
+          priority: task.priority,
+          status: task.status,
+          createdAt: task.createdAt,
+          updatedAt: task.updatedAt,
+          userId: task.id,
+        )).toList();
+
+        return Right({
+          'data': cachedEntities,
+          'source': 'local',
+          'errorMessage': failure.message // ✅ الاحتفاظ برسالة الخطأ
+        });
+      } else {
+        return Left(failure); // ⚠️ لا توجد بيانات محلية
+      }
     }
   }
 
