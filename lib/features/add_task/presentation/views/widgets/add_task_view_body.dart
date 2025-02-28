@@ -142,10 +142,16 @@ class _AddTaskViewBodyState extends State<AddTaskViewBody> {
                           priority: priority,
                           dueDate: dueDate);
 
+                      Navigator.pop(context);
+
                       LocalNotificationService.showBasicNotification(
                           title: title,
                           body: desc,
                           payload: "Create A New Task");
+                    }else{
+                      setState(() {
+                        autovalidateMode = AutovalidateMode.always;
+                      });
                     }
                   },
                   text: "Add Task"),

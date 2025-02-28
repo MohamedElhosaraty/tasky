@@ -6,6 +6,7 @@ import 'package:tasky/features/logo/domain/logo_entity/logo_entity.dart';
 import 'package:tasky/features/logo/presentation/views/logo_view.dart';
 import 'package:tasky/features/logo/presentation/views/qr_scanner_view.dart';
 import 'package:tasky/features/logo/presentation/views/task_details.dart';
+import 'package:tasky/features/notification/notification_view.dart';
 import 'package:tasky/features/on_boarding/on_boarding_view.dart';
 import 'package:tasky/features/profile/presentation/views/profile_view.dart';
 import '../../features/splash/splash_view.dart';
@@ -32,8 +33,12 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
 
     case ProfileView.routeName:
       return MaterialPageRoute(builder: (_) => const ProfileView());
+
     case QRScannerView.routeName:
       return MaterialPageRoute(builder: (_) => const QRScannerView());
+
+      case NotificationView.routeName:
+      return MaterialPageRoute(builder: (_) => const NotificationView());
 
     case TaskDetails.routeName:
       return MaterialPageRoute(
