@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -82,7 +80,6 @@ class _SigninViewBodyState extends State<SigninViewBody> {
                         context
                             .read<SigninCubit>()
                             .signIn(phone: phone, password: password);
-                        log("$phone $password");
                       } else {
                         setState(() {
                           autovalidateMode = AutovalidateMode.always;
