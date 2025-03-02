@@ -18,6 +18,7 @@ class TaskDetailsBuildConsumer extends StatelessWidget {
     return BlocConsumer<LogoCubit, LogoState>(listener: (context, state) {
       if (state is EditTaskSuccess) {
         Navigator.pushNamed(context, LogoView.routeName);
+        context.read<LogoCubit>().getLogo();
         buildErrorBar(context, 'Success');
       }
       if (state is EditTaskFailure) {

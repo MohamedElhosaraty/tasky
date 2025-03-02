@@ -133,8 +133,6 @@ class _TaskDetailsBodyState extends State<TaskDetailsBody> {
                           userId: userId ?? widget.logoEntity.userId,
                           status: status ?? widget.logoEntity.status);
 
-                      context.read<LogoCubit>().getLogo();
-                      Navigator.pushNamed(context, LogoView.routeName);
                     }else{
                       setState(() {
                         autovalidateMode = AutovalidateMode.always;
