@@ -12,16 +12,21 @@ jobs:
       - name: Checkout my repo code
         uses: actions/checkout@v2
 
-      - name: Set up JDK 17.0.12
+      - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
-          java-version: '17.0.12'
+          java-version: '17'
           distribution: 'temurin'
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+
+      - name: Upgrade Flutter & Get Dependencies
+        run: |
+          flutter upgrade
+          flutter pub get
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
@@ -30,9 +35,24 @@ jobs:
           bundler-cache: true
           working-directory: android
 
-      - name: Build and Distribute App
+      - name: Update Fastlane
+        run: gem update fastlane --no-document
+
+      - name: Remove old Gemfile.lock
+        run: rm -f android/Gemfile.lock
+
+      - name: Install Fastlane dependencies
+        run: bundle install
+        working-directory: android
+
+      - name: Clean Flutter Project
+        run: flutter clean
+
+      - name: Build APK manually
+        run: flutter build apk --release --no-tree-shake-icons
+
+      - name: Distribute App to Firebase
         env:
           FIREBASE_CLI_TOKEN: ${{ secrets.FIREBASE_CLI_TOKEN }}
-        run: |
-          fastlane android firebase_distribution --verbose
+        run: fastlane android firebase_distribution
         working-directory: android
