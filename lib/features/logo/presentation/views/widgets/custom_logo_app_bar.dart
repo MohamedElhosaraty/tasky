@@ -39,6 +39,8 @@ class CustomLogoAppBar extends StatelessWidget implements PreferredSizeWidget {
           GestureDetector(
             onTap: () {
               context.read<LogoCubit>().logout(refreshToken: Prefs.getString(EndPoint.refreshToken));
+              Prefs.remove(EndPoint.token);
+              Prefs.remove(EndPoint.refreshToken);
               Navigator.pushReplacementNamed(context, SigninView.routeName);
             },
             child: Image.asset(
