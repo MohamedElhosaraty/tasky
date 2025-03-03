@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -8,7 +10,6 @@ import 'package:tasky/core/widget/custom_date.dart';
 import 'package:tasky/core/widget/custom_drop_down_widget.dart';
 import 'package:tasky/core/widget/custom_text_form_field.dart';
 import 'package:tasky/features/add_task/presentation/cubits/create_task/create_task_cubit.dart';
-import 'package:tasky/features/logo/presentation/views/logo_view.dart';
 import 'package:tasky/generated/assets.dart';
 
 import '../../../../../core/utils/app_text_style.dart';
@@ -23,19 +24,27 @@ class AddTaskViewBody extends StatefulWidget {
 
 class _AddTaskViewBodyState extends State<AddTaskViewBody> {
 
-  void listenNotification() {
-    LocalNotificationService.streamController.stream.listen((notificationResponse) {
-
-      // كده عند الضغط على الاشعار يتم الانتقال لصفحة السكنر
-      Navigator.pushNamed(context, LogoView.routeName);
-    });
-  }
+  late StreamSubscription _subscription;
 
   @override
   void initState() {
     super.initState();
-    listenNotification();
+
+    // تأكد من استخدام broadcast() في StreamController
+    final streamController = StreamController<String>.broadcast();
+
+    _subscription = streamController.stream.listen((event) {
+      // تنفيذ الحدث عند استقبال بيانات جديدة
+    });
   }
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+
+
   final List<String> experienceLevels = [
     "low",
     "medium",
