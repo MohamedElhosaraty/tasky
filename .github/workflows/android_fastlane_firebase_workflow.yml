@@ -38,9 +38,6 @@ jobs:
       - name: Update Fastlane
         run: gem update fastlane --no-document
 
-      - name: Remove old Gemfile.lock
-        run: rm -f android/Gemfile.lock
-
       - name: Install Fastlane dependencies
         run: bundle install
         working-directory: android
